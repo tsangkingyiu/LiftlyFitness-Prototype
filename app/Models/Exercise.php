@@ -4,74 +4,71 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-use Spatie\Sluggable\HasSlug;
-use Spatie\Sluggable\SlugOptions;
-
 class Exercise extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
-    use HasSlug;
+    use HasFactory, HasSlug, InteractsWithMedia;
 
-    protected $fillable = [ 'title', 'slug', 'instruction', 'tips', 'video_type', 'video_url', 'bodypart_ids', 'duration', 'sets', 'equipment_id', 'level_id', 'status','is_premium', 'based', 'type' ];
-
-    protected $casts = [
-        'equipment_id'      => 'integer',
-        'level_id'          => 'integer',
-        'is_premium'        => 'integer',
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'category',
+        'muscle_group',
+        'equipment',
+        'difficulty',
+        'instructions',
+        'video_url',
+        'thumbnail',
+        'is_active',
     ];
 
-    public function equipment()
-    {
-        return $this->belongsTo(Equipment::class, 'equipment_id', 'id');
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
-    public function level()
-    {
-        return $this->belongsTo(Level::class, 'level_id', 'id');
-    }
-
-    public function getBodypartIdsAttribute($value)
-    {
-        return isset($value) ? json_decode($value, true) : null; 
-    }
-
-    public function setBodypartIdsAttribute($value)
-    {
-        $this->attributes['bodypart_ids'] = isset($value) ? json_encode($value) : null;
-    }
-
-    public function getSetsAttribute($value)
-    {
-        return isset($value) ? json_decode($value, true) : null;
-    }
-    
-    public function setSetsAttribute($value)
-    {
-        $this->attributes['sets'] = isset($value) ? json_encode($value) : null;
-    }
-    
-    public function workoutDayExercise(){
-        return $this->hasMany(WorkoutDayExercise::class, 'exercise_id', 'id');
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::deleted(function ($row) {
-            $row->workoutDayExercise()->delete();
-        });
-    }
-
-    public function getSlugOptions() : SlugOptions
+    public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
-                    ->generateSlugsFrom('title')
-                    ->saveSlugsTo('slug')
-                    ->doNotGenerateSlugsOnUpdate();
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 
+    // Relationships
+    public function workouts()
+    {
+        return $this->belongsToMany(Workout::class, 'workout_exercises')
+            ->withPivot(['order', 'sets', 'reps', 'duration', 'rest', 'notes'])
+            ->withTimestamps();
+    }
+
+    public function personalRecords()
+    {
+        return $this->hasMany(PersonalRecord::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    public function scopeByMuscleGroup($query, $muscleGroup)
+    {
+        return $query->where('muscle_group', $muscleGroup);
+    }
+
+    public function scopeByDifficulty($query, $difficulty)
+    {
+        return $query->where('difficulty', $difficulty);
+    }
 }

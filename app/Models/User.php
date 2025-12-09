@@ -2,128 +2,128 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements MustVerifyEmail, HasMedia
+class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, InteractsWithMedia;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [ 'username', 'first_name', 'last_name', 'phone_number', 'status', 'email', 'password', 'gender', 'display_name', 'login_type', 'user_type', 'player_id', 'is_subscribe', 'timezone','last_notification_seen' ];
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'provider',
+        'provider_id',
+        'avatar',
+        'bio',
+        'birth_date',
+        'gender',
+        'height',
+        'weight',
+        'fitness_goal',
+        'activity_level',
+    ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'is_subscribe'  => 'integer',
+        'birth_date' => 'date',
+        'height' => 'decimal:2',
+        'weight' => 'decimal:2',
     ];
 
-    public function userProfile() {
-        return $this->hasOne(UserProfile::class, 'user_id', 'id');
-    }
-
-    public function userGraph(){
-        return $this->hasMany(UserGraph::class, 'user_id', 'id');
-    }
-
-    public function userAssignDiet(){
-        return $this->hasMany(AssignDiet::class, 'user_id', 'id');
-    }
-
-    public function userAssignWorkout(){
-        return $this->hasMany(AssignWorkout::class, 'user_id', 'id');
-    }
-
-    public function userFavouriteDiet(){
-        return $this->hasMany(UserFavouriteDiet::class, 'user_id', 'id');
-    }
-
-    public function userFavouriteWorkout(){
-        return $this->hasMany(UserFavouriteWorkout::class, 'user_id', 'id');
-    }
-
-    public function userNotification(){
-        return $this->hasMany(Notification::class, 'notifiable_id', 'id');
-    }
-
-    public function chatgptFitBot(){
-        return $this->hasMany(ChatgptFitBot::class, 'user_id', 'id');
-    }
-
-    protected static function boot()
+    // Relationships
+    public function workouts()
     {
-        parent::boot();
-
-        static::deleted(function ($row) {
-            switch ($row->user_type) {
-                case 'user':
-                    $row->userProfile()->delete();
-                    $row->userGraph()->delete();
-                    $row->userAssignDiet()->delete();
-                    $row->userAssignWorkout()->delete();
-                    $row->userFavouriteDiet()->delete();
-                    $row->userFavouriteWorkout()->delete();
-                    $row->userNotification()->delete();
-                    $row->chatgptFitBot()->delete();
-                break;
-                default:
-                    # code...
-                break;
-            }
-        });
-
-        static::updated(function($model) {
-            if ($model->isDirty('first_name') || $model->isDirty('last_name') ) {
-                $model->display_name = $model->first_name.' '.$model->last_name;
-                $model->saveQuietly(); 
-            }
-        });
+        return $this->hasMany(Workout::class);
     }
 
-    public function routeNotificationForOneSignal()
+    public function workoutSessions()
     {
-        return $this->player_id;
+        return $this->hasMany(WorkoutSession::class);
     }
 
-    public function subscriptionPackage(){
-        return $this->hasOne(Subscription::class, 'user_id','id')->where('status',config('constant.SUBSCRIPTION_STATUS.ACTIVE'));
-    }
-
-    public function classSchedulePlan(){
-        return $this->hasMany(ClassSchedulePlan::class, 'user_id', 'id');
-    }
-
-    public function setPhoneNumberAttribute($value)
+    public function meals()
     {
-        $this->attributes['phone_number'] = $value ? str_replace('+', '', $value) : null;
+        return $this->hasMany(Meal::class);
     }
 
-    public function getPhoneNumberAttribute()
+    public function nutritionGoals()
     {
-        return $this->attributes['phone_number'] ? '+' . $this->attributes['phone_number'] : null;
+        return $this->hasMany(NutritionGoal::class);
+    }
+
+    public function bodyMeasurements()
+    {
+        return $this->hasMany(BodyMeasurement::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
+
+    public function personalRecords()
+    {
+        return $this->hasMany(PersonalRecord::class);
+    }
+
+    public function achievements()
+    {
+        return $this->belongsToMany(Achievement::class, 'user_achievements')
+            ->withPivot('unlocked_at')
+            ->withTimestamps();
+    }
+
+    // Following relationships
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id')
+            ->withTimestamps();
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id')
+            ->withTimestamps();
+    }
+
+    // Helper methods
+    public function follow(User $user)
+    {
+        return $this->following()->attach($user->id);
+    }
+
+    public function unfollow(User $user)
+    {
+        return $this->following()->detach($user->id);
+    }
+
+    public function isFollowing(User $user)
+    {
+        return $this->following()->where('following_id', $user->id)->exists();
+    }
+
+    public function getAge()
+    {
+        return $this->birth_date ? $this->birth_date->age : null;
+    }
+
+    public function getBMI()
+    {
+        if ($this->height && $this->weight) {
+            $heightInMeters = $this->height / 100;
+            return round($this->weight / ($heightInMeters * $heightInMeters), 2);
+        }
+        return null;
     }
 }
