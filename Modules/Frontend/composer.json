@@ -1,0 +1,39 @@
+{
+    "name": "nwidart/frontend",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Frontend\\": "app/",
+            "Modules\\Frontend\\Database\\Factories\\": "database/factories/",
+            "Modules\\Frontend\\Database\\Seeders\\": "database/seeders/"
+        },
+        "files": [
+            "app/Helpers/helper.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Frontend\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "laravel/socialite": "^5.18",
+        "stripe/stripe-php": "^16.6",
+        "razorpay/razorpay": "^2.9",
+        "unicodeveloper/laravel-paystack": "1.2"
+    }
+}

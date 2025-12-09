@@ -1,0 +1,254 @@
+   /* Start Light mode */
+
+    /* body.light-mode {
+        --background-color: #fff;
+        --text-color: #000;
+        --border-color: #ddd;
+    } */
+    
+    body.light-mode .btn-select-all {
+        background-color: var(--site-color);
+    }
+
+    /* End light mode */
+
+    /* Dark mode */
+
+    body.dark-mode {
+        --background-color: #151824;
+        --text-color: #fff;
+        --border-color: #30384f;
+        --secondary-background-color: #222738;
+        --accent-color: #8A92A6;
+    }
+    
+    body.dark-mode {
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+
+    body.dark-mode .list-group-item {
+        border-bottom: 2px solid #565454 !important;
+    }
+
+    body.dark-mode .workout-detail,
+    body.dark-mode .search-form,
+    body.dark-mode .list-group-item,
+    body.dark-mode .section-color {
+        background-color: var(--background-color);
+    }
+    
+    body.dark-mode .fixed-card {
+        background-color: var(--background-color) !important;
+    }
+
+    body.dark-mode .main-banner,
+    body.dark-mode .fitness-product,
+    body.dark-mode .card,
+    body.dark-mode .auth-card,
+    body.dark-mode .login-section,
+    body.dark-mode .otp-section,
+    body.dark-mode .footer,
+    body.dark-mode .custom-table thead,
+    body.dark-mode tbody,
+    body.dark-mode .iti__country-list,
+    body.dark-mode .feedback-container,
+    body.dark-mode .client-review {
+        background-color: var(--secondary-background-color);
+    }
+
+    body.dark-mode #equipment-slider img,
+    body.dark-mode .workout-img,
+    body.dark-mode .equipment-img,
+    body.dark-mode .equipment img {
+        opacity: 0.8;
+    }
+    
+    body.dark-mode .banner-content a,
+    body.dark-mode .title-color,
+    body.dark-mode .btn-select-all,
+    body.dark-mode .carousel-dark .carousel-caption,
+    body.dark-mode .sidebar-content ul li a,
+    body.dark-mode .form-input-data,
+    body.dark-mode .dropdown-item,
+    body.dark-mode .total-amount,
+    body.dark-mode .payment-type,
+    body.dark-mode .favorite-text,
+    body.dark-mode .banner-content span { 
+        color: var(--text-color);
+    }
+
+    body.dark-mode .dropdown-item:hover {
+        background-color: var(--background-color) !important;
+    }
+
+    body.dark-mode .navbar-font a,
+    body.dark-mode .form-phone-data,
+    body.dark-mode .form-phone-data:focus,
+    body.dark-mode .input-form,
+    body.dark-mode .input-form:focus,
+    body.dark-mode .form-control-data,
+    body.dark-mode .search-form,
+    body.dark-mode .form-control-data:focus,
+    body.dark-mode .suggestion-data,
+    /* body.dark-mode .apexcharts-yaxis-label, */
+    body.dark-mode .nav-site-name {
+        color: var(--text-color) !important;
+    }
+
+    body.dark-mode .nav-link:hover,
+    body.dark-mode .suggestion-data:hover {
+        color: var(--site-color) !important;
+    }
+
+    body.dark-mode .btn-select-all,
+    body.dark-mode .input-form:focus {
+        border: 1px solid var(--text-color);
+    }
+
+    body.dark-mode .custom-table th {
+        border: 5px solid var(--background-color);
+    }
+    
+    body.dark-mode .custom-table td:not(:last-child) {
+        border-right: 5px solid var(--background-color);
+    }
+
+    body.dark-mode .upload-img-btn {
+        background-color: var(--text-color) !important;
+        color: var(--background-color) !important;
+    }
+
+    body.dark-mode .nutrition-fav-btn,
+    body.dark-mode .google-otp-btn { 
+        border: 1px solid var(--text-color) !important;
+    }
+
+    body.dark-mode .navbar-toggler,
+    body.dark-mode .carousel-dark .carousel-indicators [data-bs-target] {
+        background-color: var(--text-color);
+    }
+
+    body.dark-mode .carousel-control-next-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='fff'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    }
+    
+    body.dark-mode .carousel-control-prev-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='fff'%3e%3cpath d='M11.354 1.646a.5.5 0 0 0-.708 0L4.646 7.354a.5.5 0 0 0 0 .708l6 6a.5.5 0 0 0 .708-.708L6.707 8l4.647-4.646a.5.5 0 0 0 0-.708z'/%3e%3c/svg%3e");
+    }
+
+    body.dark-mode .card-img-overlay {
+        background: none;
+    }
+
+    body.dark-mode .form-control-data,
+    body.dark-mode .form-input-data,
+    body.dark-mode .tips,
+    body.dark-mode .ingredients-data,
+    body.dark-mode .form-phone-data,
+    body.dark-mode .form-phone-data:focus,
+    body.dark-mode .input-form,
+    body.dark-mode .input-form:focus,
+    body.dark-mode .modal-content,
+    body.dark-mode .progress {
+        background-color: var(--secondary-background-color) !important;
+    }
+
+    body.dark-mode input:-webkit-autofill, 
+    body.dark-mode input:-webkit-autofill:hover, 
+    body.dark-mode input:-webkit-autofill:focus, 
+    body.dark-mode input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px var(--secondary-background-color) inset !important;
+        -webkit-text-fill-color: var(--text-color) !important;
+    }
+
+    body.dark-mode .iti--separate-dial-code,
+    body.dark-mode .iti__selected-flag {
+        background-color: rgb(34 39 56);
+        border-right: 1px solid var(--text-color);
+        border-radius: 12px;
+    }
+   
+    body.dark-mode .input-form{
+        transition: none !important;
+    }
+
+    body.dark-mode .payment-option {
+        border: 1px solid var(--secondary-background-color) !important;    
+    }
+
+    /* START CHART */
+
+    body.dark-mode #weight-overview,
+    body.dark-mode #heart-rate-overview,
+    body.dark-mode #push-up-overview {
+        color: var(--accent-color);
+        background-color: var(--secondary-background-color) !important;
+        border-color: var(--border-color);
+    }
+
+    body.dark-mode .apexcharts-legend-text {
+        color: var(--accent-color) !important;
+    }
+
+    body.dark-mode .apexcharts-tooltip.apexcharts-theme-light {
+        background: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    body.dark-mode .apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {
+        background: var(--secondary-background-color) !important;
+    }
+
+    body.dark-mode .apexcharts-theme-light .apexcharts-tooltip {
+        background: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    body.dark-mode .apexcharts-theme-light .apexcharts-tooltip .apexcharts-tooltip-title {
+        background: #454f70 !important;
+        border: 1px solid var(--border-color) !important;
+    }
+    body.dark-mode .apexcharts-theme-light .apexcharts-xaxistooltip {
+        background: var(--secondary-background-color) !important;
+        border: 1px solid var(--border-color) !important; 
+    }
+    body.dark-mode .apexcharts-theme-light .apexcharts-xaxistooltip .apexcharts-xaxistooltip-text {
+        color: #8A92A6 !important;
+    }
+
+    body.dark-mode .apexcharts-svg .apexcharts-yaxis-texts-g text {
+        fill: #5c6ca5;
+    }
+
+    body.dark-mode .apexcharts-svg .apexcharts-xaxis-texts-g text {
+        fill: #5c6ca5;
+    }
+
+    body.dark-mode .apexcharts-svg line {
+        stroke: #5c6ca5;
+    }
+    
+    body.dark-mode .apexcharts-svg .apexcharts-track path {
+        stroke: #5c6ca5;
+    }
+
+    body.dark-mode .main-nav , 
+    body.dark-mode .user-header {
+        background-color: var(--background-color);
+    }
+
+    body.dark-mode .main-nav.fixed,
+    body.dark-mode .user-header.fixed {
+        box-shadow: 0 .125rem .25rem rgba(255,255,255,.075);
+    }
+
+     /* END CHART */
+
+    @media (max-width: 992px) {
+        body.dark-mode #navbarCollapse {
+            background: var(--background-color) !important;
+            padding-bottom: 10px !important;
+        }
+    }
+    /* Dark mode end */
