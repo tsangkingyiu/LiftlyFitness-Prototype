@@ -1,12 +1,88 @@
+# Laravel
 /node_modules
+/public/build
 /public/hot
 /public/storage
 /storage/*.key
 /vendor
 .env
+.env.backup
+.env.production
 .phpunit.result.cache
-docker-compose.override.yml
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+/.fleet
+/.idea
+/.vscode
+
+# Laravel Modules
+Modules/.DS_Store
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDE Files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.buildpath
+
+# Logs
+*.log
+php_errorlog
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Composer
+composer.phar
+vendor/
+
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build Files
+/public/css
+/public/js
+/public/mix-manifest.json
+
+# Testing
+/coverage
+.phpunit.cache
+
+# Backup Files
+*.sql
+*.sql.gz
+backup/
+
+# Temporary Files
+*.tmp
+*.temp
+*.cache
+
+# Media Files (if large)
+/storage/app/public/uploads
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Environment Specific
+.docker/
+docker-compose.override.yml
