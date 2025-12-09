@@ -3,140 +3,95 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Exercise;
-use App\Http\Resources\ExerciseResource;
-use App\Http\Resources\ExerciseDetailResource;
-use App\Http\Resources\UserExerciseResource;
-use App\Models\UserExercise;
+use Illuminate\Http\Request;
 
 class ExerciseController extends Controller
 {
-    public function getList(Request $request)
+    /**
+     * Display a listing of exercises
+     */
+    public function index(Request $request)
     {
-        $exercise = Exercise::where('status', 'active');
+        $query = Exercise::active();
 
-        $exercise->when(request('title'), function ($q) {
-            return $q->where('title', 'LIKE', '%' . request('title') . '%');
-        });
-
-        $exercise->when(request('equipment_id'), function ($q) {
-            return $q->where('equipment_id', request('equipment_id'));
-        });
-
-        $exercise->when(request('level_id'), function ($q) {
-            $level_ids = explode(',', request('level_id'));
-            return $q->whereIn('level_id', $level_ids);
-        });
-
-        $exercise->when(request('equipment_ids'), function ($q) {
-            $equipment_ids = explode(',', request('equipment_ids'));
-            return $q->whereIn('equipment_id', $equipment_ids);
-        });
-
-        $exercise->when(request('level_ids'), function ($q) {
-            $level_ids = explode(',', request('level_ids'));
-            return $q->whereIn('level_id', $level_ids);
-        });
-
-        $exercise->when(request('bodypart_id'), function ($q) {
-            return $q->whereJsonContains('bodypart_ids', request('bodypart_id'));
-        });
-        
-        if( $request->has('is_premium') && isset($request->is_premium) ) {
-            $exercise = $exercise->where('is_premium', request('is_premium'));
-        }
-                
-        $per_page = config('constant.PER_PAGE_LIMIT');
-        if( $request->has('per_page') && !empty($request->per_page)) {
-            if(is_numeric($request->per_page))
-            {
-                $per_page = $request->per_page;
-            }
-            if($request->per_page == -1 ){
-                $per_page = $exercise->count();
-            }
+        // Search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
-        $exercise = $exercise->orderBy('title', 'asc')->paginate($per_page);
+        // Filter by category
+        if ($request->has('category')) {
+            $query->byCategory($request->category);
+        }
 
-        $items = ExerciseResource::collection($exercise);
+        // Filter by muscle group
+        if ($request->has('muscle_group')) {
+            $query->byMuscleGroup($request->muscle_group);
+        }
 
-        $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
-        ];
-        
-        return json_custom_response($response);
+        // Filter by difficulty
+        if ($request->has('difficulty')) {
+            $query->byDifficulty($request->difficulty);
+        }
+
+        // Filter by equipment
+        if ($request->has('equipment')) {
+            $query->where('equipment', $request->equipment);
+        }
+
+        $exercises = $query->paginate($request->get('per_page', 20));
+
+        return response()->json([
+            'success' => true,
+            'data' => $exercises,
+        ]);
     }
 
-    public function getDetail(Request $request)
+    /**
+     * Display the specified exercise
+     */
+    public function show($id)
     {
-        $exercise = Exercise::where('id',request('id'))->first();
-           
-        if( $exercise == null )
-        {
-            return json_message_response( __('message.not_found_entry',['name' => __('message.exercise') ]) );
-        }
+        $exercise = Exercise::findOrFail($id);
 
-        $exercise_data = new ExerciseDetailResource($exercise);
-            $response = [
-                'data' => $exercise_data,
-            ];
-             
-        return json_custom_response($response);
+        return response()->json([
+            'success' => true,
+            'data' => $exercise,
+        ]);
     }
 
-    public function storeUserExercise(Request $request)
+    /**
+     * Get exercise categories
+     */
+    public function categories()
     {
-        $user_id = auth()->id();
-        $exerciseID = $request->exercise_id;
-        $workoutID = $request->workout_id;
+        $categories = Exercise::select('category')
+            ->distinct()
+            ->pluck('category');
 
-        $exercise = Exercise::where('id', $exerciseID )->first();
-        if( $exercise == null )
-        {
-            return json_message_response( __('message.not_found_entry',['name' => __('message.exercise') ]) );
-        }
-        $user_exercise = UserExercise::updateOrCreate(
-            ['user_id' => $user_id, 'exercise_id' => $exerciseID],
-            ['exercise_id' => $exerciseID,'workout_id' => $workoutID]
-        );
-
-        $message = $user_exercise->wasRecentlyCreated ? __('message.save_form', ['form' => __('message.exercise')]) : __('message.update_form', ['form' => __('message.exercise')]); 
-
-        return json_message_response($message);
+        return response()->json([
+            'success' => true,
+            'data' => $categories,
+        ]);
     }
-    
-    public function getUserExercise(Request $request)
+
+    /**
+     * Get muscle groups
+     */
+    public function muscleGroups()
     {
-        $user = auth()->user();
+        $muscleGroups = Exercise::select('muscle_group')
+            ->distinct()
+            ->pluck('muscle_group');
 
-        $user_exercises = UserExercise::where('user_id', $user->id)->with('exercise');
-
-        $per_page = config('constant.PER_PAGE_LIMIT', 10);
-        if ($request->has('per_page') && !empty($request->per_page)) {
-            if (is_numeric($request->per_page)) {
-                $per_page = $request->per_page;
-            } elseif ($request->per_page == -1) {
-                $per_page = $user_exercises->count();
-            }
-        }
-
-        $user_exercises = $user_exercises->orderBy('id', 'asc')->paginate($per_page);
-
-        $items = UserExerciseResource::collection($user_exercises);
-
-        $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
-        ];
-
-        // $response = [
-        //     'pagination' => json_pagination_response($user_exercises),
-        //     'data' => $user_exercises->items(),
-        // ];
-
-        return json_custom_response($response);
+        return response()->json([
+            'success' => true,
+            'data' => $muscleGroups,
+        ]);
     }
 }

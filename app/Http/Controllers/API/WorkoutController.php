@@ -3,206 +3,171 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Workout;
-use App\Http\Resources\WorkoutResource;
-use App\Http\Resources\WorkoutDetailResource;
-use App\Models\UserFavouriteWorkout;
-use App\Models\WorkoutDay;
-use App\Http\Resources\WorkoutDayResource;
-use App\Models\WorkoutDayExercise;
-use App\Http\Resources\WorkoutDayExerciseResource;
+use Illuminate\Http\Request;
 
 class WorkoutController extends Controller
 {
-    public function getList(Request $request)
+    /**
+     * Display a listing of workouts
+     */
+    public function index(Request $request)
     {
-        $workout = Workout::where('status', 'active');
+        $query = Workout::with(['user', 'exercises']);
 
-        $workout->when(request('title'), function ($q) {
-            return $q->where('title', 'LIKE', '%' . request('title') . '%');
-        });
-
-        $workout->when(request('level_id'), function ($q) {
-            $level_ids = explode(',', request('level_id'));
-            return $q->whereIn('level_id', $level_ids);
-        });
-
-        $workout->when(request('level_ids'), function ($q) {
-            $level_ids = explode(',', request('level_ids'));
-            return $q->whereIn('level_id', $level_ids);
-        });
-
-        $workout->when(request('workout_type_id'), function ($q) {
-            return $q->where('workout_type_id', request('workout_type_id'));
-        });
-
-        $workout->when(request('workout_type_ids'), function ($q) {
-            $workout_type_ids = explode(',', request('workout_type_ids'));
-            return $q->whereIn('workout_type_id', $workout_type_ids);
-        });
-        
-        $workout->when(request('eqiupment_ids'), function ($query) {
-            return $query->whereHas('workoutExercise',function ($q1) {
-                $q1->whereHas('exercise', function ($q) {
-                    $equipment_ids = explode(',', request('equipment_ids'));
-                    $q->whereIn('equipment_id', $equipment_ids);
-                });
-            });
-        });
-
-        if( $request->has('is_premium') && isset($request->is_premium) ) {
-            $workout = $workout->where('is_premium', request('is_premium'));
-        }
-        
-        $per_page = config('constant.PER_PAGE_LIMIT');
-        if( $request->has('per_page') && !empty($request->per_page)){
-            if(is_numeric($request->per_page))
-            {
-                $per_page = $request->per_page;
-            }
-            if($request->per_page == -1 ){
-                $per_page = $workout->count();
-            }
+        // Filter by category
+        if ($request->has('category')) {
+            $query->byCategory($request->category);
         }
 
-        $workout = $workout->orderBy('title', 'asc')->paginate($per_page);
-
-        $items = WorkoutResource::collection($workout);
-
-        $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
-        ];
-        
-        return json_custom_response($response);
-    }
-
-    public function getDetail(Request $request)
-    {
-        $workout = Workout::where('id',request('id'))->first();
-           
-        if( $workout == null )
-        {
-            return json_message_response( __('message.not_found_entry',['name' => __('message.workout') ]) );
-        }
-
-        $workout_data = new WorkoutDetailResource($workout);
-
-        $response = [
-            'data' => $workout_data,
-            'workoutday' => $workout->workoutDay ?? [],
-        ];
-             
-        return json_custom_response($response);
-    }
-
-    public function getUserFavouriteWorkout(Request $request)
-    {
-        $workout = Workout::myWorkout();
-
-        $per_page = config('constant.PER_PAGE_LIMIT');
-        if( $request->has('per_page') && !empty($request->per_page)) {
-            if(is_numeric($request->per_page)) {
-                $per_page = $request->per_page;
-            }
-            if($request->per_page == -1 ) {
-                $per_page = $workout->count();
-            }
-        }
-
-        $workout = $workout->orderBy('title', 'asc')->paginate($per_page);
-
-        $items = WorkoutResource::collection($workout);
-
-        $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
-        ];
-        
-        return json_custom_response($response);
-    }
-
-    public function userFavouriteWorkout(Request $request)
-    {
-        $user_id = auth()->id();
-        $workout_id = $request->workout_id;
-
-        $workout = Workout::where('id', $workout_id )->first();
-        if( $workout == null )
-        {
-            return json_message_response( __('message.not_found_entry',['name' => __('message.workout') ]) );
-        }
-        $user_favourite_workout = UserFavouriteWorkout::where('user_id', $user_id)->where('workout_id', $workout_id)->first();
-        
-        if($user_favourite_workout != null) {
-            $user_favourite_workout->delete();
-            $message = __('message.unfavourite_workout_list');
+        // Filter by public/private
+        if ($request->has('public')) {
+            $query->where('is_public', $request->boolean('public'));
         } else {
-            $data = [
-                'user_id'      => $user_id,
-                'workout_id'   => $workout_id,
-            ];
-            
-            UserFavouriteWorkout::create($data);
-            $message = __('message.favourite_workout_list');
+            // Default: show user's workouts + public workouts
+            $query->where(function ($q) use ($request) {
+                $q->where('user_id', $request->user()->id)
+                  ->orWhere('is_public', true);
+            });
         }
 
-        return json_message_response($message);
+        // Sort
+        if ($request->has('sort')) {
+            $order = $request->get('order', 'desc');
+            $query->orderBy($request->sort, $order);
+        }
+
+        $workouts = $query->paginate($request->get('per_page', 20));
+
+        return response()->json([
+            'success' => true,
+            'data' => $workouts,
+        ]);
     }
 
-    public function workoutDayList(Request $request)
+    /**
+     * Store a newly created workout
+     */
+    public function store(Request $request)
     {
-        $workoutday = WorkoutDay::where('workout_id',request('workout_id'));
-        
-        $per_page = config('constant.PER_PAGE_LIMIT');
-        if( $request->has('per_page') && !empty($request->per_page)){
-            if(is_numeric($request->per_page))
-            {
-                $per_page = $request->per_page;
-            }
-            if($request->per_page == -1 ){
-                $per_page = $workoutday->count();
-            }
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string|max:100',
+            'duration' => 'nullable|integer',
+            'difficulty' => 'nullable|in:beginner,intermediate,advanced',
+            'is_public' => 'boolean',
+            'exercises' => 'required|array|min:1',
+            'exercises.*.exercise_id' => 'required|exists:exercises,id',
+            'exercises.*.order' => 'required|integer',
+            'exercises.*.sets' => 'nullable|integer',
+            'exercises.*.reps' => 'nullable|integer',
+            'exercises.*.duration' => 'nullable|integer',
+            'exercises.*.rest' => 'nullable|integer',
+            'exercises.*.notes' => 'nullable|string',
+        ]);
+
+        $workout = $request->user()->workouts()->create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'duration' => $validated['duration'] ?? null,
+            'difficulty' => $validated['difficulty'] ?? null,
+            'is_public' => $validated['is_public'] ?? false,
+        ]);
+
+        // Attach exercises
+        foreach ($validated['exercises'] as $exercise) {
+            $workout->exercises()->attach($exercise['exercise_id'], [
+                'order' => $exercise['order'],
+                'sets' => $exercise['sets'] ?? null,
+                'reps' => $exercise['reps'] ?? null,
+                'duration' => $exercise['duration'] ?? null,
+                'rest' => $exercise['rest'] ?? 60,
+                'notes' => $exercise['notes'] ?? null,
+            ]);
         }
 
-        $workoutday = $workoutday->paginate($per_page);
-
-        $items = WorkoutDayResource::collection($workoutday);
-
-        $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
-        ];
-        
-        return json_custom_response($response);
+        return response()->json([
+            'success' => true,
+            'data' => $workout->load('exercises'),
+            'message' => 'Workout created successfully',
+        ], 201);
     }
-    
-    public function workoutDayExerciseList(Request $request)
+
+    /**
+     * Display the specified workout
+     */
+    public function show($id)
     {
-        $day_exercise = WorkoutDayExercise::where('workout_day_id',request('workout_day_id'));
-        
-        $per_page = config('constant.PER_PAGE_LIMIT');
-        if( $request->has('per_page') && !empty($request->per_page)){
-            if(is_numeric($request->per_page))
-            {
-                $per_page = $request->per_page;
-            }
-            if($request->per_page == -1 ){
-                $per_page = $day_exercise->count();
-            }
+        $workout = Workout::with(['user', 'exercises'])->findOrFail($id);
+
+        // Check access
+        if (!$workout->is_public && $workout->user_id !== auth()->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access',
+            ], 403);
         }
 
-        $day_exercise = $day_exercise->paginate($per_page);
+        return response()->json([
+            'success' => true,
+            'data' => $workout,
+        ]);
+    }
 
-        $items = WorkoutDayExerciseResource::collection($day_exercise);
+    /**
+     * Update the specified workout
+     */
+    public function update(Request $request, $id)
+    {
+        $workout = Workout::findOrFail($id);
 
-        $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
-        ];
-        
-        return json_custom_response($response);
+        // Check ownership
+        if ($workout->user_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string|max:100',
+            'duration' => 'nullable|integer',
+            'difficulty' => 'nullable|in:beginner,intermediate,advanced',
+            'is_public' => 'boolean',
+        ]);
+
+        $workout->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $workout->load('exercises'),
+            'message' => 'Workout updated successfully',
+        ]);
+    }
+
+    /**
+     * Remove the specified workout
+     */
+    public function destroy(Request $request, $id)
+    {
+        $workout = Workout::findOrFail($id);
+
+        if ($workout->user_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        $workout->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Workout deleted successfully',
+        ]);
     }
 }
-
